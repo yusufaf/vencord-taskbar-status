@@ -33,7 +33,8 @@ Taskbar buttons and jump lists live in Electron's main process, which normal plu
 ## Limitations
 
 - With Discord closed to the tray there is no taskbar button, so no hover buttons. Jump-list tasks still work if Discord is pinned.
-- Picking a jump-list task can bring a visible Discord window to the front. A minimized or hidden window is restored to its previous state.
+- Picking a jump-list task can bring a visible Discord window to the front. The plugin tries to put a minimized or hidden window back as it was, but this is best effort.
+- If you enable the plugin while in a voice call, Discord's call buttons reappear the next time Discord updates them (for example on mute or deafen).
 
 ## Development
 

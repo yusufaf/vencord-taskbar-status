@@ -36,7 +36,10 @@ function parseStatus(argv: string[]): Status | null {
 }
 
 function requestStatus(status: Status) {
-    sender?.executeJavaScript(`Vencord.Plugins.plugins.TaskbarStatus.setStatus(${JSON.stringify(status)})`);
+    if (!sender || sender.isDestroyed()) return;
+    sender
+        .executeJavaScript(`Vencord.Plugins.plugins.TaskbarStatus.setStatus(${JSON.stringify(status)})`)
+        .catch(() => { });
 }
 
 function statusButtons() {
@@ -127,7 +130,9 @@ export function start(event: IpcMainInvokeEvent, status: Status): Status | null 
     win?.on("show", onShow);
     app.removeListener("second-instance", onSecondInstance);
     app.prependListener("second-instance", onSecondInstance);
-    setJumpList();
+    try {
+        setJumpList();
+    } catch { }
     refreshThumbar();
 
     const pending = coldStartStatus;

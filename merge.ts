@@ -19,6 +19,7 @@ export const MAX_THUMBAR_BUTTONS = 7;
  *  - Status buttons keep fixed positions, current status included, so muscle memory works.
  *  - Only when the combined list would exceed MAX_THUMBAR_BUTTONS, drop the button for
  *    `current` (clicking it does nothing anyway).
+ *  - Never return more than MAX_THUMBAR_BUTTONS, or Windows rejects the whole list.
  */
 export function mergeButtons<B>(discordButtons: B[], statusButtons: Record<Status, B>, current: Status): B[] {
     const statuses = STATUS_ORDER.map(s => ({ s, button: statusButtons[s] }));
@@ -27,5 +28,5 @@ export function mergeButtons<B>(discordButtons: B[], statusButtons: Record<Statu
     return [
         ...discordButtons,
         ...statuses.filter(({ s }) => !overCap || s !== current).map(({ button }) => button)
-    ];
+    ].slice(0, MAX_THUMBAR_BUTTONS);
 }

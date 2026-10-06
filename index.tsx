@@ -26,15 +26,17 @@ export default definePlugin({
     description: "Change your status from the Windows taskbar: buttons in the hover preview and tasks in the right-click jump list",
     tags: ["Utility"],
     authors: [{ name: "yusufaf", id: 0n }],
+    dependencies: ["UserSettingsAPI"],
 
     async setStatus(status: Status) {
-        lastStatus = status;
         await StatusSettings.updateSetting(status);
+        lastStatus = status;
         Native.update(status);
     },
 
     async start() {
-        lastStatus = StatusSettings.getSetting();
+        // Settings may not have synced yet; the change listener corrects this once they do.
+        lastStatus = StatusSettings.getSetting() ?? "online";
         const pending = await Native.start(lastStatus);
         UserSettingsProtoStore.addChangeListener(onSettingsChange);
         if (pending && pending !== lastStatus) await this.setStatus(pending);

@@ -29,6 +29,12 @@ test("4 call buttons: 8 total, current status dropped to fit 7", () => {
     ]);
 });
 
+test("never exceeds 7 even with unexpected input", () => {
+    const five = [...call(4), "extra"];
+    assert.equal(mergeButtons(five, status, "idle").length, 7);
+    assert.equal(mergeButtons(call(4), status, undefined as unknown as Status).length, 7);
+});
+
 test("never exceeds 7 and always keeps every Discord button", () => {
     for (const cur of ["online", "idle", "dnd", "invisible"] as const) {
         const out = mergeButtons(call(4), status, cur);
