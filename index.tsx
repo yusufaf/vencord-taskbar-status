@@ -16,7 +16,7 @@ let lastStatus: Status | null = null;
 
 function onSettingsChange() {
     const status = StatusSettings.getSetting();
-    if (status === lastStatus) return;
+    if (!status || status === lastStatus) return;
     lastStatus = status;
     Native.update(status);
 }
@@ -35,11 +35,12 @@ export default definePlugin({
     },
 
     async start() {
-        // Settings may not have synced yet; the change listener corrects this once they do.
-        lastStatus = StatusSettings.getSetting() ?? "online";
-        const pending = await Native.start(lastStatus);
+        // Undefined until Discord's settings have synced; the listener picks up the real value then.
+        const initial = StatusSettings.getSetting();
+        lastStatus = initial ?? null;
         UserSettingsProtoStore.addChangeListener(onSettingsChange);
-        if (pending && pending !== lastStatus) await this.setStatus(pending);
+        const pending = await Native.start(initial ?? "online");
+        if (pending && pending !== initial) await this.setStatus(pending);
     },
 
     stop() {

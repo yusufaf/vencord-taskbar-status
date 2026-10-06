@@ -26,6 +26,7 @@ let sender: WebContents | null = null;
 let current: Status = "online";
 let discordButtons: ThumbarButton[] = [];
 let originalSetThumbar: SetThumbar | null = null;
+let showTimer: ReturnType<typeof setTimeout> | undefined;
 
 // Set when Discord was cold-started from a jump list task; handed to the renderer once.
 let coldStartStatus: Status | null = parseStatus(process.argv);
@@ -79,11 +80,12 @@ function setJumpList() {
     const iconDir = join(app.getPath("userData"), "taskbarStatus");
     mkdirSync(iconDir, { recursive: true });
 
+    const viaSquirrel = existsSync(updateExe);
+
     app.setUserTasks(STATUS_ORDER.map(s => {
         const iconPath = join(iconDir, `${s}.ico`);
         writeFileSync(iconPath, statusIco(s));
 
-        const viaSquirrel = existsSync(updateExe);
         return {
             program: viaSquirrel ? updateExe : process.execPath,
             arguments: viaSquirrel
@@ -99,7 +101,8 @@ function setJumpList() {
 
 // Hiding to tray destroys the taskbar button; Windows drops its thumbnail buttons with it.
 function onShow() {
-    setTimeout(refreshThumbar, 300);
+    clearTimeout(showTimer);
+    showTimer = setTimeout(refreshThumbar, 300);
 }
 
 // Runs before Discord's own handler (prependListener), which may raise the window.
@@ -132,7 +135,9 @@ export function start(event: IpcMainInvokeEvent, status: Status): Status | null 
     app.prependListener("second-instance", onSecondInstance);
     try {
         setJumpList();
-    } catch { }
+    } catch (e) {
+        console.error("[TaskbarStatus] failed to set jump list", e);
+    }
     refreshThumbar();
 
     const pending = coldStartStatus;
@@ -150,6 +155,7 @@ export function stop(_event: IpcMainInvokeEvent) {
         BrowserWindow.prototype.setThumbarButtons = originalSetThumbar;
         if (win && !win.isDestroyed()) originalSetThumbar.call(win, discordButtons);
     }
+    clearTimeout(showTimer);
     win?.removeListener("show", onShow);
     app.removeListener("second-instance", onSecondInstance);
     if (process.platform === "win32") app.setUserTasks([]);
